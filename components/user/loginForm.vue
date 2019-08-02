@@ -3,7 +3,7 @@
         :model="userform" 
         ref="userform"
         :rules="rules" 
-        class="userform">
+        class="form">
 
         <el-form-item class="form-item" prop="username">
             <el-input 
