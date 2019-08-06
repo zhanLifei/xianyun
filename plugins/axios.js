@@ -6,5 +6,10 @@ export default function({$axios,redirect}){
         if(statusCode === 400){
             Message.warning({message})
         }
+        // 未授权
+        if( statusCode === 401 || statusCode === 403 ){
+            // 跳转到登录页
+            redirect("/user/login");
+        }
     })
 }

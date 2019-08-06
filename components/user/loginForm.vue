@@ -67,6 +67,7 @@ export default {
                        type:'success'
                    })
                    this.$store.commit('user/seruserinfo',res.data)
+                   this.$store.commit('user/serusertoken',res.data.token)
                    this.$router.push('/')
                    }).catch(err=>{
                        console.log('密码错误');

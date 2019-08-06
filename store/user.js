@@ -18,6 +18,9 @@ export const mutations = {
     seruserinfo(state,data){
         state.userInfo = data
     },
+    serusertoken(state,token){
+        state.userInfo.token = token
+    },
     clearUserInfo(state){
         state.userInfo={}
     }
