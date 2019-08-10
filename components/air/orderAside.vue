@@ -15,7 +15,7 @@
                     <span>{{data.org_airport_name}}{{data.org_airport_quay}}</span>
                 </el-col>
                 <el-col :span="14" class="flight-time">
-                    <span>---  ---</span>
+                    <span>--- {{rankTime}} ---</span>
                     <span>{{data.airline_name}}{{data.flight_no}}</span>
                 </el-col>
                 <el-col :span="5" class="flight-airport">
@@ -31,7 +31,7 @@
         </el-row>
         <el-row type="flex" justify="space-between" class="info-bar">
             <span>成人机票</span>
-            <span>￥{{data.base_price}}</span>
+            <span>￥{{data.seat_infos.org_settle_price}}</span>
             <span>x1</span>
         </el-row>
         <el-row type="flex" justify="space-between" class="info-bar">
@@ -40,8 +40,8 @@
             <span>x1</span>
         </el-row>
         <el-row type="flex" justify="space-between" align="middle" class="info-bar">
-            <span>应付总额：</span>
-            <span class="price">￥{{data.base_price+data.airport_tax_audlet}} </span>
+            <span>应付总额:</span>
+            <span class="price">￥{{allPrice}}</span>
         </el-row>           
     </div>
 </template>
@@ -52,6 +52,10 @@ export default {
         data: {
             type: Object,
             default: {}
+        },
+        allPrice:{
+            type: Number,
+            default: ''
         }
     },
 

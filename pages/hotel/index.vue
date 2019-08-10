@@ -1,13 +1,12 @@
 <template>
-    <div>首页</div>
+  <div>
+    <el-pagination small layout="prev, pager, next" :total="50">></el-pagination>
+  </div>
 </template>
 
 <script>
-export default {
-
-}
+export default {};
 </script>
 
 <style>
-
 </style>

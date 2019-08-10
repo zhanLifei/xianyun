@@ -63,6 +63,7 @@
         <el-button type="warning" class="submit" @click="handleSubmit">提交订单</el-button>
       </div>
     </div>
+    <input type="hidden" :value="alPrice">
   </div>
 </template>
 
@@ -84,7 +85,9 @@ export default {
           id: ""
         }
       ],
-
+      seatInfosData:{
+        seat_info:{}
+      }, //获取价格的
       insurances: [], //保险id
       contactName: "", //联系人姓名
       contactPhone: "", //联系人电话
@@ -144,6 +147,7 @@ export default {
     handleSubmit() {
       // 通过query获取id
       console.log(this.$route.query);
+      // 需要传递的参数
       const ordeDta = {
         users: this.user,
         insurances: this.insurances,
@@ -155,23 +159,50 @@ export default {
         air:this.$route.query.id
 
       };
-      console.log(ordeDta);
       this.$axios({
         url: "/airorders",
         method: "POST",
         data: ordeDta,
+        // 规定需要设置token值验证
         headers:{
           Authorization:`Bearer ${this.$store.state.user.userInfo.token }`
         }
       }).then(res => {
         console.log(res);
+        // 跳转付款页面
+        this.$router.push({
+          path:"/air/pay",
+          query:{
+            id:res.data.data.id
+          }
+        });
       });
     }
   },
 
-  mounted() {
-    console.log(this.$store.state.user.userInfo.token);
-  }
+  computed: {
+    alPrice(){
+      let price =0
+
+      // 接口还没返回，默认是0
+      if(!this.data.seat_infos){
+          return  0;
+      }
+      // 单价
+      price += this.data.seat_infos.org_settle_price;
+      // // 燃油费
+      price += this.data.airport_tax_audlet
+      // // // 保险费
+      price += this.insurances.length*30
+      // // //乘机人
+      price *= this.user.length
+      // 把总价格先传到父组件
+      this.$emit("setAllPrice", price)
+
+      return price
+    }
+  },
+
 };
 </script>
 

@@ -96,6 +96,7 @@ export default {
             const arr = this.data.flights.filter(v=>{
               return v.airline_name ===value
             })
+            console.log(arr);
           this.$emit("setDataList", arr)
         },
 

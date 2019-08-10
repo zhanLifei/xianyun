@@ -134,12 +134,6 @@ export default {
     this.getdata();
   }
 
-  // watch: {
-  //   //   监听url的变化
-  //   $route() {
-  //     console.log(this.$route);
-  //   }
-  // },
 };
 </script>
 
