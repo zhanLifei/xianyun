@@ -199,9 +199,11 @@ export default {
       this.$axios({
         url: "/posts"
       }).then(res => {
-        // console.log(res);
+        
+        console.log(res);
         //   文章数据获取
         this.postList = res.data.data;
+        // console.log(this.postList);
         this.cacheFlightsData = { ...res.data.data };
         //   文章总页数
         this.total = this.postList.length;
@@ -223,10 +225,11 @@ export default {
     }).then(res => {
       this.postsAdd = res.data.data;
     });
-    this.initList();
-  },
-  
 
+    this.initList();
+
+  },
+  // 测试上传
   watch: {
     // 监听路由的变化
     $route() {

@@ -58,16 +58,20 @@
         @click="fabiao"
       >发表</el-button>
 
-      <!-- 上传 -->
+      <!-- ===========上传 ===========-->
       <el-upload
-        action="http://157.122.54.189:9095/upload"
+        action="https://jsonplaceholder.typicode.com/posts/"
         list-type="picture-card"
         :on-preview="handlePictureCardPreview"
         :on-remove="handleRemove"
-        class="uploadimg"
+        :on-success="handleSuccess"
       >
         <i class="el-icon-plus"></i>
       </el-upload>
+      <el-dialog :visible.sync="dialogVisible" size="tiny">
+        <img width="100%" :src="dialogImageUrl" alt />
+      </el-dialog>
+      <!-- ============================== -->
       <div class="liuyan">
         <div class="cmt-list" v-for="(item,index) in cacheFlightsData" :key="index">
           <div class="cmt-item">
@@ -142,7 +146,10 @@ export default {
       cacheFlightsData: {},
       textarea: "", //文本内容
       content: "",
-      created_at: "" //时间
+      created_at: "", //时间
+      files: [],
+      dialogImageUrl: "",
+      dialogVisible: false
     };
   },
   methods: {
@@ -152,7 +159,15 @@ export default {
       const end = start + this.pageSize;
       this.cacheFlightsData = this.commentsList.slice(start, end);
     },
-    // 上传图片
+    // 上传图片================
+    handleSuccess(response, file, fileList){
+      console.log(file);
+      this.$axios({
+      url:'/upload',
+      }).then(res=>{
+        console.log(res);
+      })
+    },
     handleRemove(file, fileList) {
       console.log(file, fileList);
     },
@@ -160,6 +175,7 @@ export default {
       this.dialogImageUrl = file.url;
       this.dialogVisible = true;
     },
+    // ==========================
 
     //   分页
     handleSizeChange(val) {
@@ -174,7 +190,7 @@ export default {
     },
     //   发表评论
     fabiao() {
-        console.log(123);
+      console.log(123);
       this.$axios({
         url: "/comments",
         method: "POST",
@@ -184,18 +200,17 @@ export default {
         },
         data: {
           content: this.textarea,
-          post: this.$route.query.id
+          post: this.$route.query.id,
+          pics:this.files
         }
       }).then(res => {
-        // console.log(res);
         if (res.data.message === "提交成功") {
           this.$message.success("提交成功");
-          if(this.textarea===''){
-              return false
+          if (this.textarea === "") {
+            return false;
           }
-          this.textarea=''
-          this.comment()
-          
+          this.textarea = "";
+          this.comment();
         }
       });
     },
