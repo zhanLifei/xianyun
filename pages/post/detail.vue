@@ -41,14 +41,21 @@
 
       <!-- 评论 -->
       <h4 class="pinglun">评论</h4>
+      <el-tag
+        type="info"
+        closable
+        v-if="reply.nickname"
+        @close="handleCloseReply"
+      >回复@{{reply.nickname}}</el-tag>
       <div class="el-textarea">
         <textarea
           autocomplete="off"
           placeholder="说点什么吧..."
           class="el-textarea__inner"
           style="resize: none; min-height: 33px;"
-          v-model="textarea"
+          v-model="cmtForm.content"
           @keyup.13="fabiao"
+          ref="cmtInput"
         >
         ></textarea>
       </div>
@@ -60,32 +67,55 @@
 
       <!-- ===========上传 ===========-->
       <el-upload
-        action="https://jsonplaceholder.typicode.com/posts/"
+        :action="$axios.defaults.baseURL + `/upload`"
         list-type="picture-card"
+        :file-list="cmtForm.pics"
+        name="files"
+        :on-success="handleSuccess"
         :on-preview="handlePictureCardPreview"
         :on-remove="handleRemove"
-        :on-success="handleSuccess"
       >
         <i class="el-icon-plus"></i>
       </el-upload>
-      <el-dialog :visible.sync="dialogVisible" size="tiny">
-        <img width="100%" :src="dialogImageUrl" alt />
+      <el-dialog :visible.sync="dialogVisible">
+        <img width="100%" :src="$axios.defaults.baseURL + dialogImageUrl" alt />
       </el-dialog>
       <!-- ============================== -->
-      <div class="liuyan">
+      <!-- 无评论时,total为0的时候显示 -->
+      <div v-if="!total" class="kong">==========前排吃瓜,暂无评论==========</div>
+      <!-- 评论区域 ,total为0的时候隐藏 -->
+      <div class="liuyan" v-if="total">
         <div class="cmt-list" v-for="(item,index) in cacheFlightsData" :key="index">
           <div class="cmt-item">
             <div class="cmt-info">
-              <img style="width: 16px" src="http://157.122.54.189:9095/assets/images/avatar.jpg" />
+              <img style="width: 16px" :src="$axios.defaults.baseURL + item.account.defaultAvatar" />
               {{item.account.nickname}}
-              <i>{{new Date(item.created_at)}}</i>
-              <span style="    float: right">{{item.level}}</span>
+              <i>{{item.created_at | newTime}}</i>
+              <span style="float: right">{{item.level}}</span>
             </div>
+            <!-- 评论楼层 -->
+            <CommaentFloor
+              v-if="item.parent"
+              :comment="item.parent"
+              @handleReply="handleReply"
+              @handlePictureCardPreview="handlePictureCardPreview"
+            />
+
             <div class="cmt-content">
-              <div class="cmt-new">
+              <div class="cmt-new" style="position: relative">
                 <p class="cmt-message">{{item.content}}</p>
+                <el-row type="flex">
+                  <div
+                    class="cmt-pic"
+                    v-for="(pic, picIndex) in item.pics"
+                    :key="picIndex"
+                    @click="handlePictureCardPreview(pic)"
+                  >
+                    <img :src="$axios.defaults.baseURL + pic.url" />
+                  </div>
+                </el-row>
                 <div class="cmt-ctrl">
-                  <a href="javascript:;" style="display:none">回复</a>
+                  <a href="javascript:;" style="display:block" @click="handleReply(item)">回复</a>
                 </div>
               </div>
             </div>
@@ -106,6 +136,7 @@
           :page-size="pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"
+          v-if="total"
         ></el-pagination>
       </el-row>
     </div>
@@ -132,8 +163,12 @@
 </template>
 
 <script>
-// import moment from 'moment';
+import moment from "moment";
+import CommaentFloor from "@/components/post/commaentFloor";
 export default {
+  components: {
+    CommaentFloor
+  },
   data() {
     return {
       //   渲染的数据
@@ -141,16 +176,29 @@ export default {
       total: 0,
       pageIndex: 1,
       pageSize: 4,
-      //   评论的数据
-      commentsList: {},
+      //   渲染评论的数据
+      commentsList: [],
       cacheFlightsData: {},
-      textarea: "", //文本内容
-      content: "",
+      cmtForm: {
+        content: "", //评论的内容
+        pics: [], //上传的图片
+        follow: "", //回复ID
+        post: this.$route.query.id
+      },
+      reply: {},
+
       created_at: "", //时间
-      files: [],
+
       dialogImageUrl: "",
       dialogVisible: false
     };
+  },
+
+  // 过滤时间
+  filters: {
+    newTime(value) {
+      return moment(value).format("YYYY-MM-DD hh:mm");
+    }
   },
   methods: {
     // 初始化效果,实现分页的变化
@@ -160,37 +208,55 @@ export default {
       this.cacheFlightsData = this.commentsList.slice(start, end);
     },
     // 上传图片================
-    handleSuccess(response, file, fileList){
+    handleSuccess(file, fileList) {
       console.log(file);
-      this.$axios({
-      url:'/upload',
-      }).then(res=>{
-        console.log(res);
-      })
+      this.cmtForm.pics.push(file[0]);
+      console.log(this.cmtForm.pics);
     },
     handleRemove(file, fileList) {
-      console.log(file, fileList);
+      // file就是用户当前删除的图片对象
+      var current = file.name;
+      console.log(file);
+      for (var i = 0; i < this.cmtForm.pics.length; i++) {
+        if (this.cmtForm.pics[i].name === current) {
+          this.cmtForm.pics.splice(i, 1);
+          break;
+        }
+      }
     },
     handlePictureCardPreview(file) {
+      console.log(file);
       this.dialogImageUrl = file.url;
       this.dialogVisible = true;
     },
     // ==========================
 
+    // 回复楼层
+    handleReply(comment) {
+      console.log(comment);
+      this.reply = comment.account;
+      this.cmtForm.follow = comment.id;
+      // window.scrollTo(0, this.$refs.cmtInput.offsetTop);
+    },
+    handleCloseReply() {
+      this.reply = {};
+      this.cmtForm.follow = "";
+    },
     //   分页
     handleSizeChange(val) {
       console.log(`每页 ${val} 条`);
       this.pageSize = val;
       this.init();
+      this.comment();
     },
     handleCurrentChange(val) {
       console.log(`当前页: ${val}`);
       this.pageIndex = val;
       this.init();
+      this.comment();
     },
     //   发表评论
     fabiao() {
-      console.log(123);
       this.$axios({
         url: "/comments",
         method: "POST",
@@ -198,12 +264,9 @@ export default {
         headers: {
           Authorization: `Bearer ${this.$store.state.user.userInfo.token}`
         },
-        data: {
-          content: this.textarea,
-          post: this.$route.query.id,
-          pics:this.files
-        }
+        data: this.cmtForm
       }).then(res => {
+        console.log(res);
         if (res.data.message === "提交成功") {
           this.$message.success("提交成功");
           if (this.textarea === "") {
@@ -220,7 +283,7 @@ export default {
         url: "/posts/comments",
         params: { post: this.$route.query.id }
       }).then(res => {
-        console.log(res.data.data);
+        // console.log(res.data.data);
         this.commentsList = res.data.data;
         this.cacheFlightsData = { ...res.data.data };
         //   文章总页数
@@ -312,8 +375,9 @@ export default {
   }
   .cmt-item {
     border-bottom: 1px dashed #ddd;
-    padding: 20px 20px 5px;
-    height: 73px;
+    padding: 20px 20px 5px 40px;
+
+    // height: 73px;
   }
   .cmt-info {
     margin-bottom: 10px;
@@ -321,16 +385,45 @@ export default {
     color: #666;
   }
   .cmt-content {
-    padding: 0 0 0 30px;
+    padding: 0 0 0 5px;
   }
   .cmt-message {
     margin-top: 10px;
+    margin-bottom: 30px;
+  }
+  .cmt-pic {
+    border: 1px dashed #ddd;
+    padding: 4px;
+    height: 70px;
+    margin: 2px;
+    img {
+      width: 100px;
+      height: 70px;
+    }
+  }
+  .cmt-ctrl {
+    float: right;
+    font-size: 12px;
+    color: blue;
+    position: absolute;
+    bottom: 5px;
+    right: 0;
+    a:hover {
+      text-decoration: underline;
+    }
   }
 
   .pinglun {
     font-weight: 400;
     font-size: 18px;
     margin-bottom: 20px;
+  }
+
+  .kong {
+    width: 100%;
+    border: dashed 1px #999;
+    line-height: 50px;
+    text-align: center;
   }
 }
 .aside {

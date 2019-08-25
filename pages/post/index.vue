@@ -197,7 +197,7 @@ export default {
     initList() {
       // 列表攻略文章渲染
       this.$axios({
-        url: "/posts"
+        url: "http://157.122.54.189:9095/posts"
       }).then(res => {
         
         console.log(res);
